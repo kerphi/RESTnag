@@ -14,6 +14,7 @@ Installation
 
 ```bash
 apt-get install apache2 libapache2-mod-php5 php-pear wget 
+echo 'suhosin.executor.include.whitelist="phar"' > /etc/php5/apache2/conf.d/restnag.ini
 wget http://silex-project.org/get/silex.phar -O /var/www/silex.phar
 pear channel-discover pear.pxxo.net
 pear install pxxo/atomwriter
