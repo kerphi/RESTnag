@@ -6,6 +6,30 @@ use Symfony\Component\HttpFoundation\Response;
 
 $app = new Silex\Application(); 
 
+function patch_nagios_config($lnum, $key, $newvalue) {
+    $patched = false;
+    $lnum_c = 0;
+    $cfg = array();
+    foreach(file('/etc/nagios3/nagios.cfg') as $l) {
+        $lnum_c++;
+        $l = trim($l);
+        if ($lnum == $lnum_c and $l[0] != '#' and !empty($l)) {
+            $l2 = explode('=',$l);
+            $l2 = array_map('trim', $l2);
+            if ($l2[0] == $key) {
+                $l2[1] = $newvalue;
+                $cfg[] = implode('=', $l2);
+                $patched = true;
+            } else {
+                $cfg[] = $l;
+            }
+        } else {
+            $cfg[] = $l;
+        }
+    }
+    return array('patched' => $patched, 'config' => $cfg);
+}
+
 function parse_nagios_config() {
     $i = 0;
     $cfg = array();
@@ -13,7 +37,7 @@ function parse_nagios_config() {
     foreach(file('/etc/nagios3/nagios.cfg') as $l) {
         $lnum++;
         $l = trim($l);
-        if ($l[0] == '#' or empty($l)) {
+        if (empty($l) or $l[0] == '#') {
             continue;
         }
         $l = explode('=',$l);
@@ -31,6 +55,55 @@ $app->get('/config/nagios.cfg/{v}/{n}', function($v, $n) {
     $cfg = parse_nagios_config();
     if (isset($cfg[$v][$n])) {
         $r = new Response($cfg[$v][$n][1], 200);
+        $r->headers->set('Content-Type', 'text/plain; charset=UTF-8');
+        return $r; 
+    } else {
+        return new Response('', 404);
+    }
+});
+
+$app->put('/config/nagios.cfg/{v}/{n}', function($v, $n) use ($app) {
+    $request  = $app['request'];
+    $newvalue = $request->getContent();
+
+    $cfg = parse_nagios_config();    
+    if (isset($cfg[$v][$n])) {
+        $output  = 'Line:     '.$cfg[$v][$n][0]."\n";
+        $output .= 'Key:      '.$v."\n";
+        $output .= 'OldValue: '.$cfg[$v][$n][1]."\n";
+
+        $ret = patch_nagios_config($cfg[$v][$n][0], $v, $newvalue);
+        if (!$ret['patched']) {
+            return new Response('', 304); // not modified
+        }
+
+        // check new config syntaxe
+        $tmpcfg = tempnam("/tmp", "nagios");
+        file_put_contents($tmpcfg, implode("\n", $ret['config']));
+        exec('/usr/sbin/nagios3 -v '.$tmpcfg, $o,  $r);
+        if ($r == 0) {
+            $backup = file_get_contents('/etc/nagios3/nagios.cfg');
+            $r      = copy($tmpcfg, '/etc/nagios3/nagios.cfg');
+            if ($r) {
+                // restart nagios daemon
+                exec('/etc/init.d/nagios3 restart', $o, $r);
+                if ($r == 0) {
+                    $status = array(implode("\n", $o), 200);
+                } else {
+                    $status = array(implode("\n", $o), 422);
+                    // restore backup
+                    file_put_contents('/etc/nagios3/nagios.cfg', $backup);
+                    exec('/etc/init.d/nagios3 restart', $o, $r);
+                }
+            } else {
+                $status = array('Unable to write on /etc/nagios3/nagios.cfg', 500);
+            }
+        } else {
+            $status = array(implode("\n", $o), 422); // Unprocessable Entity
+        }
+        unlink($tmpcfg);
+
+        $r = new Response($status[0], $status[1]);
         $r->headers->set('Content-Type', 'text/plain; charset=UTF-8');
         return $r; 
     } else {
