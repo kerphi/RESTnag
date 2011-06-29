@@ -27,6 +27,10 @@ function patch_nagios_config($lnum, $key, $newvalue) {
             $cfg[] = $l;
         }
     }
+    if ($lnum == -1) {
+        $cfg[] = $key.'='.$newvalue;
+        $patched = true;
+    }
     return array('patched' => $patched, 'config' => $cfg);
 }
 
@@ -65,50 +69,47 @@ $app->get('/config/nagios.cfg/{v}/{n}', function($v, $n) {
 $app->put('/config/nagios.cfg/{v}/{n}', function($v, $n) use ($app) {
     $request  = $app['request'];
     $newvalue = $request->getContent();
+    settype($n, "integer");
+    settype($v, "string");
 
     $cfg = parse_nagios_config();    
-    if (isset($cfg[$v][$n])) {
-        $output  = 'Line:     '.$cfg[$v][$n][0]."\n";
-        $output .= 'Key:      '.$v."\n";
-        $output .= 'OldValue: '.$cfg[$v][$n][1]."\n";
-
-        $ret = patch_nagios_config($cfg[$v][$n][0], $v, $newvalue);
-        if (!$ret['patched']) {
-            return new Response('', 304); // not modified
-        }
-
-        // check new config syntaxe
-        $tmpcfg = tempnam("/tmp", "nagios");
-        file_put_contents($tmpcfg, implode("\n", $ret['config']));
-        exec('/usr/sbin/nagios3 -v '.$tmpcfg, $o,  $r);
-        if ($r == 0) {
-            $backup = file_get_contents('/etc/nagios3/nagios.cfg');
-            $r      = copy($tmpcfg, '/etc/nagios3/nagios.cfg');
-            if ($r) {
-                // restart nagios daemon
-                exec('sudo /etc/init.d/nagios3 reload', $o, $r);
-                if ($r == 0) {
-                    $status = array(implode("\n", $o), 200);
-                } else {
-                    $status = array(implode("\n", $o), 422);
-                    // restore backup
-                    file_put_contents('/etc/nagios3/nagios.cfg', $backup);
-                    exec('sudo /etc/init.d/nagios3 reload', $o, $r);
-                }
-            } else {
-                $status = array('Unable to write on /etc/nagios3/nagios.cfg', 500);
-            }
-        } else {
-            $status = array(implode("\n", $o), 422); // Unprocessable Entity
-        }
-        unlink($tmpcfg);
-
-        $r = new Response($status[0], $status[1]);
-        $r->headers->set('Content-Type', 'text/plain; charset=UTF-8');
-        return $r; 
-    } else {
+    if (!isset($cfg[$v]) && $n != 0) {
         return new Response('', 404);
     }
+    $ret = patch_nagios_config(isset($cfg[$v][$n]) ? $cfg[$v][$n][0] : -1, $v, $newvalue);
+    if (!$ret['patched']) {
+        return new Response('', 304); // not modified
+    }
+
+    // check new config syntaxe
+    $tmpcfg = tempnam("/tmp", "nagios");
+    file_put_contents($tmpcfg, implode("\n", $ret['config']));
+    exec('/usr/sbin/nagios3 -v '.$tmpcfg, $o,  $r);
+    if ($r == 0) {
+        $backup = file_get_contents('/etc/nagios3/nagios.cfg');
+        $r      = copy($tmpcfg, '/etc/nagios3/nagios.cfg');
+        if ($r) {
+            // restart nagios daemon
+            exec('sudo /etc/init.d/nagios3 reload', $o, $r);
+            if ($r == 0) {
+                $status = array(implode("\n", $o), 200);
+            } else {
+                $status = array(implode("\n", $o), 422);
+                // restore backup
+                file_put_contents('/etc/nagios3/nagios.cfg', $backup);
+                exec('sudo /etc/init.d/nagios3 reload', $o, $r);
+            }
+        } else {
+            $status = array('Unable to write on /etc/nagios3/nagios.cfg', 500);
+        }
+    } else {
+        $status = array(implode("\n", $o), 422); // Unprocessable Entity
+    }
+    unlink($tmpcfg);
+
+    $r = new Response($status[0], $status[1]);
+    $r->headers->set('Content-Type', 'text/plain; charset=UTF-8');
+    return $r; 
 });
 
 $app->get('/config/nagios.cfg/', function() {
