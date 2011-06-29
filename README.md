@@ -13,13 +13,14 @@ Installation
 ------------
 
 ```bash
-apt-get install libapache2-mod-php5 php-pear
+apt-get install apache2 libapache2-mod-php5 php-pear wget 
 wget http://silex-project.org/get/silex.phar -O /var/www/silex.phar
 pear channel-discover pear.pxxo.net
 pear install pxxo/atomwriter
-git clone git://github.com/kerphi/RESTnag.git /tmp/RESTnag
-mv -f /tmp/RESTnag/* /var/www/
-mv -f /tmp/RESTnag/.* /var/www/
+cd /var/www/
+git init
+git remote add origin git://github.com/kerphi/RESTnag.git
+git pull origin master
 ```
 
 Usage
