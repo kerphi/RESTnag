@@ -86,14 +86,14 @@ $app->put('/config/nagios.cfg/{v}/{n}', function($v, $n) use ($app) {
             $r      = copy($tmpcfg, '/etc/nagios3/nagios.cfg');
             if ($r) {
                 // restart nagios daemon
-                exec('/etc/init.d/nagios3 restart', $o, $r);
+                exec('sudo /etc/init.d/nagios3 reload', $o, $r);
                 if ($r == 0) {
                     $status = array(implode("\n", $o), 200);
                 } else {
                     $status = array(implode("\n", $o), 422);
                     // restore backup
                     file_put_contents('/etc/nagios3/nagios.cfg', $backup);
-                    exec('/etc/init.d/nagios3 restart', $o, $r);
+                    exec('sudo /etc/init.d/nagios3 reload', $o, $r);
                 }
             } else {
                 $status = array('Unable to write on /etc/nagios3/nagios.cfg', 500);
