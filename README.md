@@ -13,6 +13,8 @@ Requirements
 Installation
 ------------
 
+Install example on a Debian server:
+
 ```bash
 apt-get install apache2 libapache2-mod-php5 php-pear wget 
 echo 'suhosin.executor.include.whitelist="phar"' > /etc/php5/apache2/conf.d/restnag.ini
@@ -28,6 +30,7 @@ git pull origin master
 ```
 
 Web server must have write permissions on nagios config files:
+
 ```bash
 adduser www-data nagios
 chgrp -R nagios /etc/nagios3/
