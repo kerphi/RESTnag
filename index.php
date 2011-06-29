@@ -41,40 +41,43 @@ $app->get('/config/nagios.cfg/{v}/{n}', function($v, $n) {
 $app->get('/config/nagios.cfg/', function() {
     $cfg = parse_nagios_config();
 
+    ob_start();
     $xmlWriter = new XMLWriter();
     $xmlWriter->openUri('php://output');
     $xmlWriter->setIndent(true);
     include_once("ATOMWriter.php");
     $f = new ATOMWriter($xmlWriter, true);
-    $f->startFeed('urn:restnag')
+    $f->startFeed('urn:restnag:config:nagios.cfg')
         ->writeStartIndex(1)
         ->writeItemsPerPage(10)
         ->writeTotalResults(1)
         ->writeTitle("nagios.cfg");
-
     foreach($cfg as $k => $v) {
         $i = 0;
         foreach($v as $vv) {
             $f->startEntry("urn:restnag:config:nagios.cfg:".$k.':'.$i)
                 ->writeTitle($k.'_'.$i)
                 ->writeLink(urlencode($k).'/'.$i, 'text/plain')
-                //->writeContent(htmlspecialchars($c[1], ENT_COMPAT, 'UTF-8'), 'text/plain')
                 ->writeContent($vv[1], 'text/plain')
                 ->endEntry();
             $f->flush();
+            $i++;
         }
     }
 
     $f->endFeed();
-    $f->flush();  
+    $f->flush();
+    $output = ob_get_contents();
+    ob_end_clean();
 
-    $r = new Response('', 200);
+    $r = new Response($output, 200);
     $r->headers->set('Content-Type', 'application/atom+xml; charset=UTF-8');
     return $r; 
 });
 
 $app->get('/config/', function() {
 
+    ob_start();
     $xmlWriter = new XMLWriter();
     $xmlWriter->openUri('php://output');
     $xmlWriter->setIndent(true);
@@ -123,12 +126,12 @@ $app->get('/', function() {
         ->writeTitle("Nagios's configuration")
         ->writeLink("config/", 'application/atom+xml')
         ->endEntry();
-    $f->flush();
-
     $f->endFeed();
     $f->flush();  
+    $output = ob_get_contents();
+    ob_end_clean();
 
-    $r = new Response('', 200);
+    $r = new Response($output, 200);
     $r->headers->set('Content-Type', 'application/atom+xml; charset=UTF-8');
     return $r; 
 }); 
