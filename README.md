@@ -27,6 +27,19 @@ git remote add origin git://github.com/kerphi/RESTnag.git
 git pull origin master
 ```
 
+Web server must have write permissions on nagios config files:
+```bash
+adduser www-data nagios
+chgrp -R nagios /etc/nagios3/
+chmod ug+rwx /etc/nagios3/
+find /etc/nagios3 -type d -exec chmod g+rws {} \;
+find /etc/nagios3 -type f -exec chmod ug+rw {} \;
+chgrp -R nagios /var/lib/nagios3/
+chmod ug+rwx /var/lib/nagios3/
+find /var/lib/nagios3 -type d -exec chmod g+rws {} \;
+find /var/lib/nagios3 -type f -exec chmod ug+rw {} \;
+```
+
 Usage
 -----
 
