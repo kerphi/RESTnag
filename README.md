@@ -7,7 +7,8 @@ The code is written in PHP. It depends on [Silex framework](http://silex-project
 Requirements
 ------------
 
-A nagios3 server
+* Nagios3 server
+* HTTP server with PHP5.3 and PEAR
 
 Installation
 ------------
