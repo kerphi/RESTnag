@@ -49,5 +49,5 @@ Usage
 This example assumes that your HTTP server where is installed your RESTful service is http://myserver/ and that this server is protected with login and password.
 
 ```bash
-echo "-1" | curl -u login:password -X PUT http://myserver/config/nagios.cfg/debug_level/0
+echo "-1" | curl -u login:password -d @- -X PUT http://myserver/config/nagios.cfg/debug_level/0
 ```
