@@ -116,6 +116,61 @@ $app->get('/etc/nagios3/nagios.cfg/', function() {
     return $r; 
 });
 
+$app->put('/etc/nagios3/conf.d/{conf_file}', function($conf_file) use ($app) {
+    $request = $app['request'];
+    $config  = $request->getContent();
+    $conf_file_path = '/etc/nagios3/conf.d/'.$conf_file;
+    $is_config_new = !file_exists($conf_file_path);
+
+    if (!preg_match('/\.cfg$/',$conf_file)) {
+        return new Response('Bad format '.$conf_file.' must end with .cfg'."\n", 400);
+    }
+
+
+    // create a backup from the old config
+    $backup = !$is_config_new ? file_get_contents($conf_file_path) : '';
+
+    // test the new config
+    file_put_contents($conf_file_path, $config);
+    exec('/usr/sbin/nagios3 -v /etc/nagios3/nagios.cfg', $o,  $r);
+    if ($r == 0) {
+        // restart nagios daemon
+        $o = array();
+        exec('sudo /etc/init.d/nagios3 reload', $o, $r);
+        if ($r == 0) {
+            $status = array(implode("\n", $o), 200);
+        } else {
+            $status = array(implode("\n", $o), 422);
+        }
+    } else {
+        $status = array(implode("\n", $o), 422); // Unprocessable Entity
+    }
+
+    // restore backup ?
+    if ($status[1] != 200) {
+        if ($is_config_new) {
+            unlink($conf_file_path);
+        } else {
+            file_put_contents($conf_file_path, $backup);
+        }
+        exec('sudo /etc/init.d/nagios3 reload', $o, $r);
+    }
+
+    $r = new Response($status[0], $status[1]);
+    $r->headers->set('Content-Type', 'text/plain; charset=UTF-8');
+    return $r;
+});
+
+$app->get('/etc/nagios3/conf.d/{conf_file}', function($conf_file) {
+    $conf_file_path = '/etc/nagios3/conf.d/'.$conf_file;
+    if (!file_exists($conf_file_path)) {
+        return new Response($conf_file_path.' does not exists', 404);
+    }
+    $r = new Response(file_get_contents($conf_file_path), 200);
+    $r->headers->set('Content-Type', 'text/plain; charset=UTF-8');
+    return $r; 
+});
+
 $app->get('/etc/nagios3/conf.d/', function() {
     $cfglist = glob('/etc/nagios3/conf.d/*.cfg');
 
