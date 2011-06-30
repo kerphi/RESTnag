@@ -164,7 +164,7 @@ $app->get('/etc/', function() {
         ->writeTitle('/etc/');
 
     $f->startEntry("urn:restnag:etc")
-        ->writeTitle("Nagios's configuration")
+        ->writeTitle("/etc/nagios3/")
         ->writeLink($GLOBALS['baseurl']."/etc/nagios3/", 'application/atom+xml')
         ->endEntry();
     $f->endFeed();
