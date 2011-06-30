@@ -18,6 +18,21 @@ $app->get('/config/nagios.cfg/{v}/{n}', function($v, $n) {
     }
 });
 
+$app->get('/config/nagios.cfg/{v}/', function($v) {
+    $cfg = parse_nagios_config();
+    if (isset($cfg[$v])) {
+        $output = '';
+        foreach($cfg[$v] as $vv) {
+            $output .= $vv[1]."\n";
+        }
+        $r = new Response($output, 200);
+        $r->headers->set('Content-Type', 'text/plain; charset=UTF-8');
+        return $r;
+    } else {
+        return new Response('', 404);
+    }
+});
+
 $app->put('/config/nagios.cfg/{v}/{n}', function($v, $n) use ($app) {
     $request  = $app['request'];
     $newvalue = $request->getContent();
