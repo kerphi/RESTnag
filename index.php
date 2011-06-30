@@ -92,12 +92,12 @@ $app->get('/etc/nagios3/nagios.cfg/', function() {
         ->writeStartIndex(1)
         ->writeItemsPerPage(10)
         ->writeTotalResults(1) // todo: calculate from $cfg
-        ->writeTitle("/etc/nagios3/nagios.cfg");
+        ->writeTitle("/etc/nagios3/nagios.cfg/");
     foreach($cfg as $k => $v) {
         $i = 0;
         foreach($v as $vv) {
             $f->startEntry("urn:restnag:etc-nagios3-nagios.cfg-".$k.'-'.$i)
-                ->writeTitle($k.'/'.$i)
+                ->writeTitle('/etc/nagios3/nagios.cfg/'.$k.'/'.$i)
                 ->writeLink($GLOBALS['baseurl'].'/etc/nagios3/nagios.cfg/'.urlencode($k).'/'.$i, 'text/plain')
                 ->writeContent($vv[1], 'text/plain')
                 ->endEntry();
@@ -131,13 +131,13 @@ $app->get('/etc/nagios3/', function() {
         ->writeTitle("/etc/nagios3/");
 
     $f->startEntry("urn:restnag:etc-nagios3-nagios.cfg")
-        ->writeTitle('nagios.cfg')
+        ->writeTitle('/etc/nagios3/nagios.cfg/')
         ->writeLink($GLOBALS['baseurl']."/etc/nagios3/nagios.cfg/", 'application/atom+xml')
         ->endEntry();
     $f->flush();
 
     $f->startEntry("urn:restnag:etc-nagios3-conf.d")
-        ->writeTitle('conf.d')
+        ->writeTitle('/etc/nagios3/conf.d/')
         ->writeLink($GLOBALS['baseurl']."/etc/nagios3/conf.d/", 'application/atom+xml')
         ->endEntry();
     $f->flush();
