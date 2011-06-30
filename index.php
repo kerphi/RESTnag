@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 $app = new Silex\Application(); 
 
-$app->get('/config/nagios.cfg/{v}/{n}', function($v, $n) {
+$app->get('/etc/nagios3/nagios.cfg/{v}/{n}', function($v, $n) {
     $cfg = parse_nagios_config();
     if (isset($cfg[$v][$n])) {
         $r = new Response($cfg[$v][$n][1], 200);
@@ -18,7 +18,7 @@ $app->get('/config/nagios.cfg/{v}/{n}', function($v, $n) {
     }
 });
 
-$app->get('/config/nagios.cfg/{v}/', function($v) {
+$app->get('/etc/nagios3/nagios.cfg/{v}/', function($v) {
     $cfg = parse_nagios_config();
     if (isset($cfg[$v])) {
         $output = '';
@@ -33,7 +33,7 @@ $app->get('/config/nagios.cfg/{v}/', function($v) {
     }
 });
 
-$app->put('/config/nagios.cfg/{v}/{n}', function($v, $n) use ($app) {
+$app->put('/etc/nagios3/nagios.cfg/{v}/{n}', function($v, $n) use ($app) {
     $request  = $app['request'];
     $newvalue = $request->getContent();
     settype($n, "integer");
@@ -79,7 +79,7 @@ $app->put('/config/nagios.cfg/{v}/{n}', function($v, $n) use ($app) {
     return $r; 
 });
 
-$app->get('/config/nagios.cfg/', function() {
+$app->get('/etc/nagios3/nagios.cfg/', function() {
     $cfg = parse_nagios_config();
 
     ob_start();
@@ -88,17 +88,17 @@ $app->get('/config/nagios.cfg/', function() {
     $xmlWriter->setIndent(true);
     include_once("ATOMWriter.php");
     $f = new ATOMWriter($xmlWriter, true);
-    $f->startFeed('urn:restnag:config:nagios.cfg')
+    $f->startFeed('urn:restnag:etc-nagios3-nagios.cfg')
         ->writeStartIndex(1)
         ->writeItemsPerPage(10)
-        ->writeTotalResults(1)
-        ->writeTitle("nagios.cfg");
+        ->writeTotalResults(1) // todo: calculate from $cfg
+        ->writeTitle("/etc/nagios3/nagios.cfg");
     foreach($cfg as $k => $v) {
         $i = 0;
         foreach($v as $vv) {
-            $f->startEntry("urn:restnag:config:nagios.cfg:".$k.':'.$i)
-                ->writeTitle($k.'_'.$i)
-                ->writeLink(urlencode($k).'/'.$i, 'text/plain')
+            $f->startEntry("urn:restnag:etc-nagios3-nagios.cfg-".$k.'-'.$i)
+                ->writeTitle($k.'/'.$i)
+                ->writeLink($GLOBALS['baseurl'].'/etc/nagios3/nagios.cfg/'.urlencode($k).'/'.$i, 'text/plain')
                 ->writeContent($vv[1], 'text/plain')
                 ->endEntry();
             $f->flush();
@@ -116,7 +116,7 @@ $app->get('/config/nagios.cfg/', function() {
     return $r; 
 });
 
-$app->get('/config/', function() {
+$app->get('/etc/nagios3/', function() {
 
     ob_start();
     $xmlWriter = new XMLWriter();
@@ -128,17 +128,17 @@ $app->get('/config/', function() {
         ->writeStartIndex(1)
         ->writeItemsPerPage(10)
         ->writeTotalResults(1)
-        ->writeTitle("Nagios's configuration");
+        ->writeTitle("/etc/nagios3/");
 
-    $f->startEntry("urn:restnag:config:nagios.cfg")
+    $f->startEntry("urn:restnag:etc-nagios3-nagios.cfg")
         ->writeTitle('nagios.cfg')
-        ->writeLink("nagios.cfg/", 'application/atom+xml')
+        ->writeLink($GLOBALS['baseurl']."/etc/nagios3/nagios.cfg/", 'application/atom+xml')
         ->endEntry();
     $f->flush();
 
-    $f->startEntry("urn:restnag:config:conf.d")
+    $f->startEntry("urn:restnag:etc-nagios3-conf.d")
         ->writeTitle('conf.d')
-        ->writeLink("conf.d/", 'application/atom+xml')
+        ->writeLink($GLOBALS['baseurl']."/etc/nagios3/conf.d/", 'application/atom+xml')
         ->endEntry();
     $f->flush();
 
@@ -150,7 +150,7 @@ $app->get('/config/', function() {
     return $r; 
 });
 
-$app->get('/', function() { 
+$app->get('/etc/', function() { 
 
     $xmlWriter = new XMLWriter();
     $xmlWriter->openUri('php://output');
@@ -161,11 +161,11 @@ $app->get('/', function() {
         ->writeStartIndex(1)
         ->writeItemsPerPage(10)
         ->writeTotalResults(1)
-        ->writeTitle($GLOBALS['title']);
+        ->writeTitle('/etc/');
 
     $f->startEntry("urn:restnag:config")
         ->writeTitle("Nagios's configuration")
-        ->writeLink("config/", 'application/atom+xml')
+        ->writeLink($GLOBALS['baseurl']."/etc/nagios3/", 'application/atom+xml')
         ->endEntry();
     $f->endFeed();
     $f->flush();  
@@ -174,6 +174,12 @@ $app->get('/', function() {
 
     $r = new Response($output, 200);
     $r->headers->set('Content-Type', 'application/atom+xml; charset=UTF-8');
+    return $r; 
+}); 
+
+$app->get('/', function() { 
+    $r = new Response('', 302);
+    $r->headers->set('Location', $GLOBALS['baseurl'].'/etc/');
     return $r; 
 }); 
 

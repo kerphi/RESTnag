@@ -27,6 +27,7 @@ cd /var/www/
 git init
 git remote add origin git://github.com/kerphi/RESTnag.git
 git pull origin master
+echo "<?php $GLOBALS['baseurl'] = 'http://myserver/';" > config.php
 ```
 
 Web server must have write permissions on nagios config files:
