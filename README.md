@@ -53,8 +53,18 @@ find /var/lib/nagios3 -type f -exec chmod ug+rw {} \;
 Usage
 -----
 
-This example assumes that your HTTP server where is installed your RESTful service is http://myserver/ and that this server is protected with login and password.
+These examples assume that your HTTP server where is installed your RESTful service is http://myserver/ and that this server is protected with login and password.
+
+This example shows how to modify only one parameter in /etc/nagios3/nagios.cfg conf file:
 
 ```bash
-echo "-1" | curl -u login:password -d @- -X PUT http://myserver/config/nagios.cfg/debug_level/0
+echo "-1" | curl -u login:password -d @- -X PUT http://myserver/etc/nagios3/nagios.cfg/debug_level/0
 ```
+
+This example shows how to create or update a full config file in /etc/nagios3/conf.d/ directory:
+
+```bash
+echo "# my full config file" | curl -u login:password -d @- -X PUT http://myserver/etc/nagios3/conf.d/myconf.cfg
+```
+
+
