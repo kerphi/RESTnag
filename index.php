@@ -116,6 +116,38 @@ $app->get('/etc/nagios3/nagios.cfg/', function() {
     return $r; 
 });
 
+$app->get('/etc/nagios3/conf.d/', function() {
+    $cfglist = glob('/etc/nagios3/conf.d/*.cfg');
+
+    ob_start();
+    $xmlWriter = new XMLWriter();
+    $xmlWriter->openUri('php://output');
+    $xmlWriter->setIndent(true);
+    include_once("ATOMWriter.php");
+    $f = new ATOMWriter($xmlWriter, true);
+    $f->startFeed('urn:restnag:etc-nagios3-conf.d')
+        ->writeStartIndex(1)
+        ->writeItemsPerPage(10)
+        ->writeTotalResults(count($cfglist))
+        ->writeTitle("/etc/nagios3/conf.d/");
+    foreach($cfglist as $c) {
+        $c = basename($c);
+        $f->startEntry("urn:restnag:etc-nagios3-conf.d-".$c)
+            ->writeTitle('/etc/nagios3/conf.d/'.$c)
+            ->writeLink($GLOBALS['baseurl'].'/etc/nagios3/conf.d/'.urlencode($c), 'text/plain')
+            ->endEntry();
+    }
+
+    $f->endFeed();
+    $f->flush();
+    $output = ob_get_contents();
+    ob_end_clean();
+
+    $r = new Response($output, 200);
+    $r->headers->set('Content-Type', 'application/atom+xml; charset=UTF-8');
+    return $r; 
+});
+
 $app->get('/etc/nagios3/', function() {
 
     ob_start();
