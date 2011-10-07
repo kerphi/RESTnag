@@ -49,6 +49,13 @@ chgrp -R nagios /var/lib/nagios3/
 chmod ug+rwx /var/lib/nagios3/
 find /var/lib/nagios3 -type d -exec chmod g+rws {} \;
 find /var/lib/nagios3 -type f -exec chmod ug+rw {} \;
+
+# allows web server to write nagiosigrapher config files
+chgrp -R nagios /etc/nagiosgrapher/ngraph.d/
+chmod ug+rwx /etc/nagiosgrapher/ngraph.d/
+find /etc/nagiosgrapher/ngraph.d/ -type d -exec chmod g+rws {} \;
+find /etc/nagiosgrapher/ngraph.d/ -type f -exec chmod ug+rw {} \;
+chgrp -R nagios /etc/nagiosgrapher/ngraph.d/
 ```
 
 Usage
@@ -66,6 +73,11 @@ This example shows how to create or update a full config file in /etc/nagios3/co
 
 ```bash
 echo "# my full config file" | curl -u login:password -d @- -X PUT http://myserver/etc/nagios3/conf.d/myconf.cfg
+```
+
+This example shows how to create or update a full config file in /etc/nagiosgrapher/ngraph.d/ directory:
+```bash
+echo "# my full config file" | curl -u login:password -d @- -X PUT http://myserver/etc/nagiosgrapher/ngraph.d/test.ncfg
 ```
 
 
