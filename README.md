@@ -35,7 +35,8 @@ Web server must have write permissions on nagios config files:
 ```bash
 # allows web server to start/stop nagios with sudo
 apt-get install sudo 
-echo 'www-data   ALL = NOPASSWD: /etc/init.d/nagios3' > /etc/sudoers.d/restnag
+echo 'www-data   ALL = NOPASSWD: /etc/init.d/nagios3'        > /etc/sudoers.d/restnag
+echo 'www-data   ALL = NOPASSWD: /etc/init.d/nagiosgrapher' >> /etc/sudoers.d/restnag
 chmod 0440 /etc/sudoers.d/restnag
 
 # allows web server to write nagios config files
