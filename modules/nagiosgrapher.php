@@ -36,6 +36,18 @@ $app->get('/etc/nagiosgrapher/ngraph.d/', function() {
     return $r; 
 });
 
+$app->get('/etc/nagiosgrapher/ngraph.d/{confname}.ncfg', function($confname) {
+    $cfgpath = '/etc/nagiosgrapher/ngraph.d/'.$confname.'.ncfg';
+    if (file_exists($cfgpath)) {
+        $output = file_get_contents($cfgpath);
+        $r = new Response($output, 200);
+        $r->headers->set('Content-Type', 'text/plain; charset=UTF-8');
+        return $r;
+    } else {
+        return new Response('', 404);
+    }
+});
+
 // to check if nagiosgrapher is running:
 // ps aux | grep `cat /var/run/nagiosgrapher/nagiosgrapher.pid` | grep ^nagios
 
