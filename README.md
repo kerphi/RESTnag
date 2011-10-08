@@ -76,6 +76,7 @@ echo "# my full config file" | curl -u login:password -d @- -X PUT http://myserv
 ```
 
 This example shows how to create or update a full config file in /etc/nagiosgrapher/ngraph.d/ directory:
+
 ```bash
 echo "# my full config file" | curl -u login:password -d @- -X PUT http://myserver/etc/nagiosgrapher/ngraph.d/test.ncfg
 ```
