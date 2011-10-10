@@ -114,6 +114,46 @@ $app->put('/etc/nagiosgrapher/ngraph.d/{confname}.ncfg', function($confname) use
     return $r;
 });
 
+$app->delete('/etc/nagiosgrapher/ngraph.d/{confname}.ncfg', function($confname) {
+    $conf_file_path = '/etc/nagiosgrapher/ngraph.d/'.$confname.'.ncfg';
+    if (!file_exists($conf_file_path)) {
+        return new Response($conf_file_path.' does not exists', 404);
+    }
+
+    // create a backup from the config
+    $backup = file_get_contents($conf_file_path);
+
+    // try to removed config
+    $r = @unlink($conf_file_path);
+    if (!$r) {
+        return new Response('Unable to delete '.$conf_file_path, 403);
+    }
+
+    // test a nagiosgrapher restart
+    exec('sudo /etc/init.d/nagiosgrapher restart', $o, $r);
+    if (is_nagiosgrapher_running()) {
+        $status = array(implode("\n", $o), 200); // Success
+    } else {
+        $status = array(implode("\n", $o), 422); // Unprocessable Entity
+    }
+
+    // restore backup ?
+    if ($status[1] != 200) {
+        file_put_contents($conf_file_path, $backup);
+        exec('sudo /etc/init.d/nagiosgrapher restart', $o, $r);
+        if (!is_nagiosgrapher_running()) {
+            return new Response("Can't restart nagiosgrapher", 500);
+        }
+    } else {
+        // everything is ok so just restart nagios3 to take into account new graphs status
+        exec('sudo /etc/init.d/nagios3 reload', $o, $r);
+    }
+
+    $r = new Response($status[0], $status[1]);
+    $r->headers->set('Content-Type', 'text/plain; charset=UTF-8');
+    return $r;
+});
+
 $app->get('/etc/nagiosgrapher/', function() {
     $r = new Response('', 302);
     $r->headers->set('Location', $GLOBALS['baseurl'].'/etc/nagiosgrapher/ngraph.d/');
