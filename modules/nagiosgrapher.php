@@ -99,6 +99,9 @@ $app->put('/etc/nagiosgrapher/ngraph.d/{confname}.ncfg', function($confname) use
         if (!is_nagiosgrapher_running()) {
             return new Response("nagiosgrapher config can't be restored", 500);
         }
+    } else {
+        // everything is ok so just restart nagios3 to take into account new graphs
+        exec('sudo /etc/init.d/nagios3 reload', $o, $r);
     }
 
     // restore nagiosgrapher status (stop it if necessary)
