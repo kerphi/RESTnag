@@ -19,7 +19,7 @@ $app->get('/etc/', function() {
     $xmlWriter->setIndent(true);
     include_once("ATOMWriter.php");
     $f = new ATOMWriter($xmlWriter, true);
-    $f->startFeed('urn:restnag:ect:')
+    $f->startFeed('urn:restnag:etc:')
         ->writeStartIndex(1)
         ->writeItemsPerPage(10)
         ->writeTotalResults(1)
